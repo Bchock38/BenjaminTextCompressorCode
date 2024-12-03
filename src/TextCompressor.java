@@ -21,19 +21,75 @@
  *  = 43.54% compression ratio!
  ******************************************************************************/
 
+import java.util.ArrayList;
+
 /**
  *  The {@code TextCompressor} class provides static methods for compressing
  *  and expanding natural language through textfile input.
  *
- *  @author Zach Blick, YOUR NAME HERE
+ *  @author Zach Blick, Benjamin Chock
  */
 public class TextCompressor {
 
     private static void compress() {
 
         // TODO: Complete the compress() method
+        String[] knownWords = new String[31];
+        knownWords[0] = " ";
+        knownWords[1] = "the";
+        knownWords[2] = "and";
+        knownWords[3] = "i";
+        knownWords[4] = "to";
+        knownWords[5] = "of";
+        knownWords[6] = "a";
+        knownWords[7] = "you";
+        knownWords[8] = "my";
+        knownWords[9] = "in";
+        knownWords[10] = "that";
+        knownWords[11] = "is";
+        knownWords[12] = "not";
+        knownWords[13] = "with";
+        knownWords[14] = "me";
+        knownWords[15] = "it";
+        knownWords[16] = "she";
+        knownWords[17] = "he";
+        knownWords[18] = "alice";
+        knownWords[19] = "said";
+        knownWords[20] = "her";
+        knownWords[21] = "so";
+        knownWords[22] = "as";
+        knownWords[23] = "on";
+        knownWords[24] = "all";
+        knownWords[25] = "had";
+        knownWords[26] = "but";
+        knownWords[27] = "for";
+        knownWords[28] = "very";
+        knownWords[29] = "be";
+        knownWords[30] = "do";
+
+        String currentChar;
+        String currentWord = "";
+
+        while (!BinaryStdIn.isEmpty()){
+            while (BinaryStdIn.readChar(8) != ' '){
+                currentChar = String.valueOf(BinaryStdIn.readChar());
+                currentChar = currentWord + currentChar;
+            }
+            if (contains(knownWords,currentWord)){
+
+            }
+        }
 
         BinaryStdOut.close();
+    }
+
+    public static int contains(String[] words, String target){
+        for (int i = 0; i < words.length; i++){
+            if (words[i].equals(target)){
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static void expand() {
