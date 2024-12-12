@@ -21,8 +21,6 @@
  *  = 43.54% compression ratio!
  ******************************************************************************/
 
-import java.util.ArrayList;
-
 /**
  *  The {@code TextCompressor} class provides static methods for compressing
  *  and expanding natural language through textfile input.
@@ -31,125 +29,102 @@ import java.util.ArrayList;
  */
 public class TextCompressor {
 
+    //magic numbers
+    private static final int MAXSIZE = 16384;
+    private static final int EOF = 256;
+    private static final int BITSIZE = 14;
     private static void compress() {
-
+        String toBeIn = "";
+        char ascii;
         // TODO: Complete the compress() method
-        String[] knownWords = new String[31];
-        knownWords[0] = " ";
-        knownWords[1] = "the";
-        knownWords[2] = "and";
-        knownWords[3] = "i";
-        knownWords[4] = "to";
-        knownWords[5] = "of";
-        knownWords[6] = "a";
-        knownWords[7] = "you";
-        knownWords[8] = "my";
-        knownWords[9] = "in";
-        knownWords[10] = "that";
-        knownWords[11] = "is";
-        knownWords[12] = "not";
-        knownWords[13] = "with";
-        knownWords[14] = "me";
-        knownWords[15] = "it";
-        knownWords[16] = "she";
-        knownWords[17] = "he";
-        knownWords[18] = "alice";
-        knownWords[19] = "said";
-        knownWords[20] = "her";
-        knownWords[21] = "so";
-        knownWords[22] = "as";
-        knownWords[23] = "on";
-        knownWords[24] = "all";
-        knownWords[25] = "had";
-        knownWords[26] = "but";
-        knownWords[27] = "for";
-        knownWords[28] = "very";
-        knownWords[29] = "be";
-        knownWords[30] = "do";
-        int location;
-        String currentChar;
-        String currentWord = "";
-
-        while (!BinaryStdIn.isEmpty()){
-            currentChar = String.valueOf(BinaryStdIn.readChar(8));
-            while (currentChar != " ") {
-                currentWord = currentWord + currentChar;
-                currentChar = String.valueOf(BinaryStdIn.readChar(8));
-            }
-            location = contains(knownWords,currentWord);
-            if (location != -1){
-                BinaryStdOut.write(knownWords[location],5);
-            }
-            else {
-                for (int i = 0; i < currentWord.length();i++){
-                    BinaryStdOut.write(currentWord.charAt(i),8);
-                }
-            }
-
-
+        TST codes = new TST();
+        //add all the characters in extended ascii to tst
+        for (int i = 0; i < 256; i++){
+            ascii = (char) i;
+            toBeIn += ascii;
+            codes.insert(toBeIn, i);
+            toBeIn = "";
         }
+        //read in the text meant to be compressed
+        String text = BinaryStdIn.readString();
+        String currentString = "";
+        int code;
+        int position = 0;
+        int newCodes = 257;
+        //while there is text to be compressed
+        while (position < text.length()){
+            //get the longest prefix
+            currentString = codes.getLongestPrefix(text, position);
+            //get the code asociated with the longest prefix
+            code = codes.lookup(currentString);
+            //if there is still space in my tst and it's not the last character in the string add it to my codes
+            if (newCodes < MAXSIZE && position+currentString.length() < text.length()){
+                codes.insert(currentString + text.charAt(position + currentString.length()), newCodes);
+                newCodes++;
+
+            }
+            //write out the code of the string
+            BinaryStdOut.write(code, BITSIZE);
+            //move to the next character
+            position += currentString.length();
+        }
+        //indicate the file is ended
+        BinaryStdOut.write(EOF, BITSIZE);
 
         BinaryStdOut.close();
     }
 
-    public static int contains(String[] words, String target){
-
-        for (int i = 0; i < words.length; i++){
-            if (words[i].equals(target)){
-                return i;
-            }
-        }
-        return -1;
-    }
-
     private static void expand() {
-        String[] knownWords = new String[31];
-        knownWords[0] = " ";
-        knownWords[1] = "the";
-        knownWords[2] = "and";
-        knownWords[3] = "i";
-        knownWords[4] = "to";
-        knownWords[5] = "of";
-        knownWords[6] = "a";
-        knownWords[7] = "you";
-        knownWords[8] = "my";
-        knownWords[9] = "in";
-        knownWords[10] = "that";
-        knownWords[11] = "is";
-        knownWords[12] = "not";
-        knownWords[13] = "with";
-        knownWords[14] = "me";
-        knownWords[15] = "it";
-        knownWords[16] = "she";
-        knownWords[17] = "he";
-        knownWords[18] = "alice";
-        knownWords[19] = "said";
-        knownWords[20] = "her";
-        knownWords[21] = "so";
-        knownWords[22] = "as";
-        knownWords[23] = "on";
-        knownWords[24] = "all";
-        knownWords[25] = "had";
-        knownWords[26] = "but";
-        knownWords[27] = "for";
-        knownWords[28] = "very";
-        knownWords[29] = "be";
-        knownWords[30] = "do";
         // TODO: Complete the expand() method
-        String words = "";
-        int word;
-
-        while (!BinaryStdIn.isEmpty()){
-            word = BinaryStdIn.readInt(5);
-            if (word <= 30){
-                words += knownWords[word];
-            }
-            else{
-                words += (char)word;
-            }
+        int code;
+        String strCode;
+        String nextLet;
+        String[] codes = new String[MAXSIZE];
+        char ascii;
+        int oldCodes = 257;
+        String toBeIn = "";
+        int nextCode;
+        //add all of extended ascii to map
+        for (int i = 0; i < 256; i++){
+            ascii = (char) i;
+            toBeIn += ascii;
+            codes[i] = toBeIn;
+            toBeIn = "";
         }
+        //read in the first code
+        code = BinaryStdIn.readInt(BITSIZE);
+        String lookAhead = "";
+        //while we haven't reached end of file keep taking in new codes
+        while (code != EOF){
+            //get the string that corresponds to the code
+            strCode = codes[code];
+            //write out that string
+            BinaryStdOut.write(strCode);
+            //get the next code so we can start to add the letter to make the tst codes for the map
+            nextCode = BinaryStdIn.readInt(BITSIZE);
+            //if the next code isn't the end of the file
+            if (nextCode != EOF) {
+                //edge case: if next code is being made in thsi run we know that next code is just current string + it's first char
+                if (oldCodes == nextCode){
+                    lookAhead = codes[oldCodes] = strCode + strCode.charAt(0);
+                }
+                //otherwise set look ahead as currentstring + next strings first letter
+                else{
+                    nextLet = codes[nextCode];
+                    lookAhead = strCode + nextLet.charAt(0);
+                }
 
-
+            }
+            //only if codes is smaller than maxsize then add to map
+            if (oldCodes < MAXSIZE){
+                codes[oldCodes] = lookAhead;
+                oldCodes++;
+            }
+            //reset lookahead
+            lookAhead = "";
+            //get the next code
+            code = nextCode;
+        }
         BinaryStdOut.close();
     }
 
